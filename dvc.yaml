@@ -1,0 +1,33 @@
+stages:
+  prepare:
+    cmd: uv run src/prepare.py
+    deps:
+      - data/green_tripdata_2025-01.parquet
+      - data/green_tripdata_2025-02.parquet
+      - src/prepare.py
+    outs:
+      - data/processed/X_train.pkl
+      - data/processed/X_val.pkl
+      - data/processed/y_train.pkl
+      - data/processed/y_val.pkl
+      - data/processed/dv.pkl
+    metrics:
+      - data/processed/data_stats.json:
+          cache: false
+
+  train:
+    cmd: uv run src/experiment.py
+    deps:
+      - data/processed/X_train.pkl
+      - data/processed/X_val.pkl
+      - data/processed/y_train.pkl
+      - data/processed/y_val.pkl
+      - data/processed/dv.pkl
+      - src/experiment.py
+    params:
+      - train.learning_rate
+      - train.max_depth
+      - train.min_child_weight
+    metrics:
+      - metrics/rmse.json:
+          cache: false

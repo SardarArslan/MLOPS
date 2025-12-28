@@ -1,0 +1,11 @@
+# DVC
+.dvc/tmp/
+.dvc/cache/
+
+# Data files (tracked by DVC)
+data/*.parquet
+data/*.csv
+
+# MLflow
+mlruns/
+mlflow.db

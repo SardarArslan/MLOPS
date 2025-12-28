@@ -1,0 +1,79 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: uv run src/prepare.py
+    deps:
+    - path: data/green_tripdata_2025-01.parquet
+      hash: md5
+      md5: 110776612e1b020e9c4a0e41f16da597
+      size: 1178451
+    - path: data/green_tripdata_2025-02.parquet
+      hash: md5
+      md5: 285ba83969404f0be70cf6ae250e394b
+      size: 1117474
+    - path: src/prepare.py
+      hash: md5
+      md5: fc5c5f70a26ac76b1aa046495a5ce023
+      size: 2943
+    outs:
+    - path: data/processed/X_train.pkl
+      hash: md5
+      md5: c382c4e50680c739bab10e27cf804a02
+      size: 1297007
+    - path: data/processed/X_val.pkl
+      hash: md5
+      md5: 510a9c0f801cd3354bd9535bffc3cc6c
+      size: 1211131
+    - path: data/processed/data_stats.json
+      hash: md5
+      md5: 77891e1cdfedc092c52d2a92161cbc30
+      size: 249
+    - path: data/processed/dv.pkl
+      hash: md5
+      md5: 28ee534f3c23d89b36b2781cbbc4b0c4
+      size: 95281
+    - path: data/processed/y_train.pkl
+      hash: md5
+      md5: fdf4fc43c02fcb091ee6ab09c7d4ba46
+      size: 370617
+    - path: data/processed/y_val.pkl
+      hash: md5
+      md5: 17b7f5c9482fa3328493709b03e0c495
+      size: 353905
+  train:
+    cmd: uv run src/experiment.py
+    deps:
+    - path: data/processed/X_train.pkl
+      hash: md5
+      md5: c382c4e50680c739bab10e27cf804a02
+      size: 1297007
+    - path: data/processed/X_val.pkl
+      hash: md5
+      md5: 510a9c0f801cd3354bd9535bffc3cc6c
+      size: 1211131
+    - path: data/processed/dv.pkl
+      hash: md5
+      md5: 28ee534f3c23d89b36b2781cbbc4b0c4
+      size: 95281
+    - path: data/processed/y_train.pkl
+      hash: md5
+      md5: fdf4fc43c02fcb091ee6ab09c7d4ba46
+      size: 370617
+    - path: data/processed/y_val.pkl
+      hash: md5
+      md5: 17b7f5c9482fa3328493709b03e0c495
+      size: 353905
+    - path: src/experiment.py
+      hash: md5
+      md5: 0533cb02b0e44b53159583e7aaa7633c
+      size: 5329
+    params:
+      params.yaml:
+        train.learning_rate: 0.1291168559115615
+        train.max_depth: 11
+        train.min_child_weight: 2.1202867152859155
+    outs:
+    - path: metrics/rmse.json
+      hash: md5
+      md5: d58035e3f59f110ddf96036316c45454
+      size: 141

@@ -1,0 +1,9 @@
+{
+  "train_samples": 46307,
+  "val_samples": 44218,
+  "train_mean_duration": 13.493045327920184,
+  "train_std_duration": 8.627611800312678,
+  "val_mean_duration": 13.825383328056448,
+  "val_std_duration": 9.10021276049256,
+  "features_count": 4159
+}

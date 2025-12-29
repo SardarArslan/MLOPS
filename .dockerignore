@@ -1,0 +1,45 @@
+# .dockerignore
+
+# DVC and data files
+data/
+.dvc/
+.dvcignore
+dvc.yaml
+dvc.lock
+
+# Development files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.eggs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and local files
+mlruns/
+mlflow.db
+*.log
+logs/
+
+# Test files
+tests/
+*.ipynb
+Untitled.ipynb
+
+# Git
+.git/
+.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -31,9 +31,6 @@ jobs:
       - name: Install dependencies with uv
         run: uv sync --frozen
 
-      - name: Debug - Show if DVC is installed
-        run: uv run python -c "import dvc; print(f'DVC version: {dvc.__version__}')"
-
       - name: Pull data with DVC
         env:
           DVC_REMOTE_URL: ${{ secrets.DVC_REMOTE_URL }}

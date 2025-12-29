@@ -22,16 +22,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install Python and uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.12'
-          cache: 'uv'
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+            # Set your Python version; uv will install it if needed
+            python-version: '3.12'
+            # This enables the built-in, managed cache for uv
+            enable-cache: true
 
       - name: Pull data with DVC
         env:

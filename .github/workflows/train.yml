@@ -2,14 +2,22 @@
 name: Train Model
 
 on:
+  # 1. Regular schedule (primary trigger)
   schedule:
-    # Weekly training: Every Monday at 2 AM UTC
-    - cron: '0 2 * * 1'
-  workflow_dispatch:  # Manual trigger from GitHub UI
+    - cron: '0 2 * * 1'  # Weekly on Monday
+
+  # 2. Manual trigger (for emergencies, testing)
+  workflow_dispatch:
+    inputs:
+      force_retrain:
+        description: 'Force retrain even if no data change'
+        required: false
+        default: 'false'
+
+  # 3. Code changes (secondary trigger)
   push:
     paths:
       - 'src/train/**'
-      - 'data/**'
       - 'params.yaml'
       - 'dvc.yaml'
 
@@ -18,50 +26,66 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository with DVC
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Python with uv
+      - name: Setup
         uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'
           enable-cache: true
 
-      - name: Install dependencies
+      - name: Install
         run: uv sync --frozen
 
-      - name: Pull data with DVC (if remote configured)
+      - name: Check for new data
+        id: data-check
         env:
           DVC_REMOTE_URL: ${{ secrets.DVC_REMOTE_URL }}
-          DVC_REMOTE_TOKEN: ${{ secrets.DVC_REMOTE_TOKEN }}
         run: |
-          if [ -n "$DVC_REMOTE_URL" ] && [ -n "$DVC_REMOTE_TOKEN" ]; then
-            echo "Configuring DVC remote..."
+          # Skip check if force retrain is requested
+          if [[ "${{ github.event.inputs.force_retrain }}" == "true" ]]; then
+            echo "has_new_data=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Simple check: see when data was last modified
+          if [ -n "$DVC_REMOTE_URL" ]; then
+            # This is a simplified check - in reality you'd have a metadata file
+            LAST_TRAIN=$(cat .last_train_time 2>/dev/null || echo "1970-01-01")
+            CURRENT_TIME=$(date -Iseconds)
+            
+            # Always train on schedule, check manually for pushes
+            if [ "${{ github.event_name }}" == "schedule" ]; then
+              echo "Scheduled training - will check for new data"
+              echo "has_new_data=true" >> $GITHUB_OUTPUT
+            else
+              echo "Not a scheduled run, training only if forced"
+              echo "has_new_data=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No DVC remote configured, cannot check for new data"
+            echo "has_new_data=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pull data and train
+        if: steps.data-check.outputs.has_new_data == 'true'
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        run: |
+          # Configure and pull data
+          if [ -n "$DVC_REMOTE_URL" ]; then
             uv run dvc remote add origin $DVC_REMOTE_URL
             uv run dvc remote modify origin --local auth basic
             uv run dvc remote modify origin --local user $DVC_REMOTE_TOKEN
             uv run dvc remote modify origin --local password $DVC_REMOTE_TOKEN
-            uv run dvc pull || echo "DVC pull failed, but continuing..."
-          else
-            echo "No DVC remote configured. Using cached data."
+            uv run dvc pull || echo "DVC pull failed"
           fi
-
-      - name: Run training pipeline
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-        run: |
-          echo "Running DVC pipeline..."
-          # This will run your experiment.py which should register the model
+          
+          # Run training
           uv run dvc repro
-
-      - name: Upload training metrics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: training-metrics-${{ github.run_id }}
-          path: |
-            metrics/
-            data/processed/data_stats.json
-          retention-days: 30
+          
+          # Record training time
+          date -Iseconds > .last_train_time

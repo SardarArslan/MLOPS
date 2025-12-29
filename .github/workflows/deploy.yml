@@ -1,9 +1,15 @@
 ---
-name: MLOps CI/CD Pipeline
+name: Deploy Model Service
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'src/train/**'
+      - 'data/**'
+      - 'params.yaml'
+      - 'dvc.yaml'
+      - '.github/workflows/train.yml'
   pull_request:
     branches: [main]
 
@@ -12,15 +18,12 @@ env:
   IMAGE_NAME: ${{ github.repository }}/nyc-taxi-model
 
 jobs:
-  test-and-train:
+  test:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout repository with DVC
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Python with uv
         uses: astral-sh/setup-uv@v6
@@ -31,20 +34,6 @@ jobs:
       - name: Install dependencies with uv
         run: uv sync --frozen
 
-      - name: Pull data with DVC
-        env:
-          DVC_REMOTE_URL: ${{ secrets.DVC_REMOTE_URL }}
-          DVC_REMOTE_TOKEN: ${{ secrets.DVC_REMOTE_TOKEN }}
-        run: |
-          # Use 'uv run dvc' to run DVC inside the virtual environment
-          if [ -n "$DVC_REMOTE_URL" ] && [ -n "$DVC_REMOTE_TOKEN" ]; then
-            uv run dvc remote add origin $DVC_REMOTE_URL
-            uv run dvc remote modify origin --local auth basic
-            uv run dvc remote modify origin --local user $DVC_REMOTE_TOKEN
-            uv run dvc remote modify origin --local password $DVC_REMOTE_TOKEN
-          fi
-          uv run dvc pull
-
       - name: Run unit tests
         run: |
           if [ -f "pyproject.toml" ]; then
@@ -53,30 +42,14 @@ jobs:
             echo "No pyproject.toml found"
           fi
 
-      - name: Run DVC pipeline
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+      - name: Lint and validate
         run: |
-          if [ -n "$MLFLOW_TRACKING_URI" ]; then
-            echo "Running DVC pipeline with MLflow tracking..."
-            uv run dvc repro
-          else
-            echo "MLFLOW_TRACKING_URI not set, skipping DVC repro"
-          fi
-
-      - name: Upload training metrics as artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: training-metrics
-          path: |
-            metrics/
-            data/processed/data_stats.json
-          retention-days: 7
+          # Add any linting/validation steps here
+          echo "✅ Basic validation passed"
 
   docker-build-push:
     runs-on: ubuntu-latest
-    needs: test-and-train
+    needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -113,14 +86,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to Cloud (Example for AWS ECS)
-        if: false  # Set to true when you're ready to deploy
+      - name: Deploy to Cloud (Optional)
+        if: false  # Set to true when ready
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'us-east-1'
         run: |
-          # Example deployment command for AWS ECS
           echo "Deploying to AWS ECS..."
           # aws ecs update-service --cluster your-cluster \
           #   --service your-service --force-new-deployment

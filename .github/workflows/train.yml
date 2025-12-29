@@ -1,0 +1,67 @@
+---
+name: Train Model
+
+on:
+  schedule:
+    # Weekly training: Every Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch:  # Manual trigger from GitHub UI
+  push:
+    paths:
+      - 'src/train/**'
+      - 'data/**'
+      - 'params.yaml'
+      - 'dvc.yaml'
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository with DVC
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python with uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Pull data with DVC (if remote configured)
+        env:
+          DVC_REMOTE_URL: ${{ secrets.DVC_REMOTE_URL }}
+          DVC_REMOTE_TOKEN: ${{ secrets.DVC_REMOTE_TOKEN }}
+        run: |
+          if [ -n "$DVC_REMOTE_URL" ] && [ -n "$DVC_REMOTE_TOKEN" ]; then
+            echo "Configuring DVC remote..."
+            uv run dvc remote add origin $DVC_REMOTE_URL
+            uv run dvc remote modify origin --local auth basic
+            uv run dvc remote modify origin --local user $DVC_REMOTE_TOKEN
+            uv run dvc remote modify origin --local password $DVC_REMOTE_TOKEN
+            uv run dvc pull || echo "DVC pull failed, but continuing..."
+          else
+            echo "No DVC remote configured. Using cached data."
+          fi
+
+      - name: Run training pipeline
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        run: |
+          echo "Running DVC pipeline..."
+          # This will run your experiment.py which should register the model
+          uv run dvc repro
+
+      - name: Upload training metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-metrics-${{ github.run_id }}
+          path: |
+            metrics/
+            data/processed/data_stats.json
+          retention-days: 30

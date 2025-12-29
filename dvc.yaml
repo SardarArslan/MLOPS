@@ -28,10 +28,8 @@ jobs:
           python-version: '3.12'
           enable-cache: true
 
-      # REMOVED: The old "Install uv" step (duplicate of setup-uv)
-
-      - name: Install DVC
-        run: uv pip install dvc
+      - name: Install dependencies with uv
+        run: uv sync --frozen
 
       - name: Pull data with DVC
         env:
@@ -45,14 +43,11 @@ jobs:
             dvc remote modify origin --local password $DVC_REMOTE_TOKEN
           fi
           dvc pull
-
-      - name: Install dependencies with uv
-        run: uv sync --frozen --no-dev
+      
 
       - name: Run unit tests (if you have tests)
         run: |
           if [ -f "pyproject.toml" ]; then
-            uv sync --dev
             uv run pytest tests/ -v || echo "No tests found or tests failed"
           else
             echo "No pyproject.toml found"

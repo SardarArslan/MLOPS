@@ -7,7 +7,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import recall_score, precision_score, f1_score
 import os
-
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+local_mlruns_path = os.path.join(project_root, "mlruns")
 mlflow_uri = os.getenv("MLFLOW_TRACKING_URI")
 
 if mlflow_uri:

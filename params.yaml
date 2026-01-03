@@ -1,12 +1,15 @@
-prepare:
-  min_trip_duration: 1
-  max_trip_duration: 60
+base:
+  project: telecom-churn
+  random_state: 42
+
+data:
+  raw_csv: data/churn.csv
+  test_size: 0.2
 
 train:
-  learning_rate: 0.1291168559115615
-  max_depth: 11
-  min_child_weight: 2.1202867152859155
-  objective: "reg:squarederror"
-  reg_alpha: 0.0617417825060163
-  reg_lambda: 0.10052786055614543
-  seed: 42
+  n_estimators: 250
+  max_depth: 25
+  class_weight: "balanced"
+
+model_selection:
+  threshold: 0.3

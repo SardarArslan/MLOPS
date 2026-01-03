@@ -9,6 +9,7 @@ dependencies = [
     "dvc>=3.65.0",
     "fastparquet>=2024.11.0",
     "hyperopt>=0.2.7",
+    "imblearn>=0.0",
     "ipykernel>=7.1.0",
     "linearmodels>=7.0",
     "matplotlib>=3.10.8",

@@ -1,34 +1,21 @@
----
 stages:
-  prepare:
-    cmd: uv run src/prepare.py
+  fetch_data:
+    cmd: uv run python src/fetch_data.py
     deps:
-      - data/green_tripdata_2025-01.parquet
-      - data/green_tripdata_2025-02.parquet
-      - src/prepare.py
+      - src/fetch_data.py
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - data/churn.csv
+      - src/preprocess.py
     outs:
-      - data/processed/X_train.pkl
-      - data/processed/X_val.pkl
-      - data/processed/y_train.pkl
-      - data/processed/y_val.pkl
-      - data/processed/dv.pkl
-    metrics:
-      - data/processed/data_stats.json:
-          cache: false
+      - data/processed/churn_cleaned.csv
 
   train:
-    cmd: uv run src/experiment.py
+    cmd: python src/train.py
     deps:
-      - data/processed/X_train.pkl
-      - data/processed/X_val.pkl
-      - data/processed/y_train.pkl
-      - data/processed/y_val.pkl
-      - data/processed/dv.pkl
-      - src/experiment.py
+      - data/processed/churn_cleaned.csv
+      - src/train.py
     params:
-      - train.learning_rate
-      - train.max_depth
-      - train.min_child_weight
-    metrics:
-      - metrics/rmse.json:
-          cache: false
+      - train
+      - model_selection.threshold

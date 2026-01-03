@@ -1,0 +1,51 @@
+name: Churn Model Retraining Pipeline
+
+on:
+  schedule:
+    - cron: '0 0 1,15 * *'
+  workflow_dispatch: # The "Manual Button"
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Updated to v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv and Python 3.12
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true # Caches your virtualenv automatically
+
+      - name: Install dependencies
+        run: |
+           uv sync
+      - name: Generate Mock Data for Test
+        run: |
+          # If the file doesn't exist (because it's not in Git), 
+          # we create a dummy version to let the pipeline start.
+          mkdir -p data
+          if [ ! -f data/churn.csv ]; then
+            echo "Creating mock data for initial run"
+            # We can use uv run to execute a small script or just copy a sample
+            uv run python src/fetch_data.py
+          fi
+
+      - name: Execute Pipeline
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          # You can add other secrets here
+        run: |
+          # Use 'uv run' to ensure the script uses the correct environment
+          uv run dvc repro
+
+      - name: Commit and Push Metadata
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dvc.lock
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-retrain: $(date +'%Y-%m-%d')" && git push)

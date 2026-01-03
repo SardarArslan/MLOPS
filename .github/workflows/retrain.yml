@@ -49,3 +49,9 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add dvc.lock
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-retrain: $(date +'%Y-%m-%d')" && git push)
+
+      - name: Upload MLflow Logs as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: mlflow-results
+            path: mlruns/

@@ -26,14 +26,9 @@ jobs:
            uv sync
       - name: Generate Mock Data for Test
         run: |
-          # If the file doesn't exist (because it's not in Git), 
-          # we create a dummy version to let the pipeline start.
           mkdir -p data
-          if [ ! -f data/churn.csv ]; then
-            echo "Creating mock data for initial run"
-            # We can use uv run to execute a small script or just copy a sample
-            uv run python src/fetch_data.py
-          fi
+          # Run the specific generation script we just made
+          uv run python src/generate_mock_data.py
 
       - name: Execute Pipeline
         env:

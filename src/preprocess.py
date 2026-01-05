@@ -11,7 +11,7 @@ def preprocess():
     df = pd.read_csv(config['data']['raw_csv'])
 
     # 1. Drop redundant columns
-    cols_to_drop = ['phone number', 'total day charge', 'total eve charge',
+    cols_to_drop = ['total day charge', 'total eve charge',
                     'total night charge', 'total intl charge']
     df.drop(columns=cols_to_drop, inplace=True)
 

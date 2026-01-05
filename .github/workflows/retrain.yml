@@ -1,52 +1,140 @@
-name: Churn Model Retraining Pipeline
+name: Churn Model Monthly Retraining
 
 on:
   schedule:
-    - cron: '0 0 1,15 * *'
-  workflow_dispatch: # The "Manual Button"
+    # Run at 02:00 UTC on the 1st day of every month
+    - cron: '0 2 1 * *'
+  workflow_dispatch:  # Manual trigger option
 
 jobs:
-  retrain:
+  monthly-retrain:
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # Set timeout to prevent hanging
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4 # Updated to v4
+      - name: Checkout repository with DVC
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Important: Fetch DVC-tracked files
+          lfs: true
 
       - name: Install uv and Python 3.12
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
-          enable-cache: true # Caches your virtualenv automatically
+          enable-cache: true
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-           uv sync
-      - name: Generate Mock Data for Test
-        run: |
-          mkdir -p data
-          # Run the specific generation script we just made
-          uv run python src/generate_mock_data.py
+          uv sync --all-extras
 
-      - name: Execute Pipeline
+      - name: Install DVC and DVC-S3
+        run: |
+          # Ensure DVC with S3 support is installed
+          uv add "dvc[s3]"
+
+      - name: Setup DVC Remote
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # Configure DVC remote if not already configured
+          if ! dvc remote list | grep -q "origin"; then
+            dvc remote add -d origin ${{ secrets.DVC_S3_REMOTE }}
+          fi
+
+      - name: Fetch Latest Data from S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          S3_SOURCE_BUCKET: ${{ secrets.S3_SOURCE_BUCKET }}
+          S3_SOURCE_KEY: ${{ secrets.S3_SOURCE_KEY || 'raw/churn_data.csv' }}
+        run: |
+          # Set S3 config in params.yaml temporarily
+          python -c "
+          import yaml
+          with open('params.yaml', 'r') as f:
+              config = yaml.safe_load(f)
+          config['data']['s3_source_bucket'] = '${{ secrets.S3_SOURCE_BUCKET }}'
+          config['data']['s3_source_key'] = '${{ secrets.S3_SOURCE_KEY }}'
+          with open('params.yaml', 'w') as f:
+              yaml.dump(config, f, default_flow_style=False)
+          "
+          # Run data fetch
+          uv run python src/fetch_data.py
+
+      - name: Pull DVC Data (if any)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # Pull any existing DVC-tracked data
+          dvc pull || echo "No data to pull, continuing..."
+
+      - name: Execute ML Pipeline
         env:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          # You can add other secrets here
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL || '' }}
         run: |
-          # Use 'uv run' to ensure the script uses the correct environment
+          # Run complete pipeline
+          echo "Starting DVC pipeline..."
           uv run dvc repro
 
-      - name: Commit and Push Metadata
+      - name: Push New Data Version to DVC Remote
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
+          echo "Pushing new data version to DVC remote..."
+          uv run dvc push
+
+      - name: Commit and Push Changes
+        run: |
+          # Configure git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add dvc.lock
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-retrain: $(date +'%Y-%m-%d')" && git push)
+          
+          # Check for changes
+          git add dvc.lock params.yaml data/churn.csv.dvc
+          git add data/processed/churn_cleaned.csv.dvc 2>/dev/null || true
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            # Get current date for commit message
+            COMMIT_DATE=$(date +'%Y-%m-%d')
+            git commit -m "Auto-retrain: $COMMIT_DATE - Monthly model update"
+            git push
+            echo "✅ Changes committed and pushed"
+          fi
 
-      - name: Upload MLflow Logs as Artifact
+      - name: Model Registry Status Check
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        run: |
+          echo "Checking model registry..."
+          uv run python -c "
+          import mlflow
+          mlflow.set_tracking_uri('${{ secrets.MLFLOW_TRACKING_URI }}')
+          client = mlflow.MlflowClient()
+          try:
+              latest = client.get_latest_versions('ChurnPredictor', stages=['Production'])
+              print(f'✅ Latest production model: {latest[0].version if latest else None}')
+          except Exception as e:
+              print(f'⚠️ Model check failed: {e}')
+          "
+
+      - name: Upload Pipeline Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-            name: mlflow-results
-            path: mlruns/
+          name: ml-pipeline-results-${{ github.run_id }}
+          path: |
+            mlruns/
+            predictions/reports/
+            data/
+          retention-days: 7

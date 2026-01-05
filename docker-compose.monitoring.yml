@@ -1,0 +1,41 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'  # Changed from 200h to 30 days
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    ports:
+      - "9091:9091"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/model-drift-dashboard.json
+      - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=10
+      - GF_AUTH_LOGIN_MAXIMUM_INACTIVE_LIFETIME_DURATION=7d
+      - GF_AUTH_LOGIN_MAXIMUM_LIFETIME_DURATION=30d
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning  # Mounts entire provisioning dir
+      - ./grafana/dashboards:/var/lib/grafana/dashboards  # Optional: for storing dashboard# Added this line
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:

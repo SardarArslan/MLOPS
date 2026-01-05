@@ -5,6 +5,10 @@ base:
 data:
   raw_csv: data/churn.csv
   test_size: 0.2
+  # S3 Configuration (optional - for production)
+  s3_source_bucket: null  # Set in GitHub Secrets for production
+  s3_source_key: "raw/churn_data.csv"  # Where data engineering uploads data
+  s3_dvc_remote: "s3://your-dvc-bucket"  # DVC remote storage
 
 train:
   n_estimators: 250

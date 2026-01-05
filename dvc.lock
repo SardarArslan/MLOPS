@@ -45,12 +45,12 @@ stages:
     deps:
     - path: data/processed/churn_cleaned.csv
       hash: md5
-      md5: 188b61c35036f2a0fd877f1cbef248c0
-      size: 10615
+      md5: b45487c3d375bcd6ccebbee6e0b8f2e8
+      size: 290603
     - path: src/train.py
       hash: md5
-      md5: 6f055f67666e69150288e22446869389
-      size: 2421
+      md5: 15cde3434aaf62936a1316250878bd9c
+      size: 2438
     params:
       params.yaml:
         model_selection.threshold: 0.3
@@ -63,21 +63,21 @@ stages:
     deps:
     - path: data/raw/churn.csv
       hash: md5
-      md5: 7abf27e693bd30772f5eca1fd64e91de
-      size: 20000
+      md5: a18208815bed03bf85f9d8e539978217
+      size: 402937
     - path: src/preprocess.py
       hash: md5
-      md5: 7f60bba89b8336bcd1345947684ae613
-      size: 1080
+      md5: 94f7391e02645561497417779953ab94
+      size: 1064
     outs:
     - path: data/processed/churn_cleaned.csv
       hash: md5
-      md5: 188b61c35036f2a0fd877f1cbef248c0
-      size: 10615
+      md5: b45487c3d375bcd6ccebbee6e0b8f2e8
+      size: 290603
   fetch_data:
     cmd: uv run python src/fetch_data.py
     deps:
     - path: src/fetch_data.py
       hash: md5
-      md5: 72f1eebe2389c62a7e57b982e95ff13d
-      size: 604
+      md5: daee2212684d0aad5edab91460a56f40
+      size: 5875

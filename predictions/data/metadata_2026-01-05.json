@@ -3,11 +3,11 @@
   "model_name": "ChurnPredictor",
   "model_stage": "Staging",
   "threshold": 0.3,
-  "total_predictions": 3333,
-  "positive_predictions": 445,
-  "positive_rate": 0.1335133513351335,
-  "avg_probability": 0.1335133513351335,
+  "total_predictions": 3666,
+  "positive_predictions": 464,
+  "positive_rate": 0.1265684669939989,
+  "avg_probability": 0.1265684669939989,
   "has_actual_labels": true,
   "data_source": "Local (fallback)",
-  "inference_timestamp": "2026-01-05T08:50:01.480084"
+  "inference_timestamp": "2026-01-05T09:39:18.445334"
 }

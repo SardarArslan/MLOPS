@@ -4,6 +4,7 @@
 
 # Data files (tracked by DVC)
 data/*.parquet
+data/processed/*
 predictions/data/*.csv
 
 # MLflow

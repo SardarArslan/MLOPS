@@ -26,7 +26,7 @@ def train():
 
     # Load preprocessed data
     df = pd.read_csv("data/processed/churn_cleaned.csv")
-    X = df.drop('churn', axis=1)
+    X = df.drop(['churn','phone number'], axis=1)
     y = df['churn']
 
     X_train, X_test, y_train, y_test = train_test_split(

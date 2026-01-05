@@ -9,3 +9,4 @@ predictions/data/*.csv
 # MLflow
 mlruns/
 mlflow.db
+.env

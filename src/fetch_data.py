@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from io import StringIO, BytesIO
 import logging
-
+import numpy as np
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -140,7 +140,5 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    import numpy as np
-
     success = fetch_data()
     exit(0 if success else 1)

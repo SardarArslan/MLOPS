@@ -3,7 +3,7 @@ base:
   random_state: 42
 
 data:
-  raw_csv: data/churn.csv
+  raw_csv: data/raw/churn.csv
   test_size: 0.2
   # S3 Configuration (optional - for production)
   s3_source_bucket: null  # Set in GitHub Secrets for production

@@ -61,7 +61,7 @@ stages:
   preprocess:
     cmd: python src/preprocess.py
     deps:
-    - path: data/churn.csv
+    - path: data/raw/churn.csv
       hash: md5
       md5: 7abf27e693bd30772f5eca1fd64e91de
       size: 20000

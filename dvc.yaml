@@ -6,7 +6,7 @@ stages:
   preprocess:
     cmd: python src/preprocess.py
     deps:
-      - data/churn.csv
+      - data/raw/churn.csv
       - src/preprocess.py
     outs:
       - data/processed/churn_cleaned.csv

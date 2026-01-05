@@ -11,3 +11,5 @@ predictions/data/*.csv
 mlruns/
 mlflow.db
 .env
+.ipynb_checkpoints
+*.ipynb

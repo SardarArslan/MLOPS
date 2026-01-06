@@ -1,3 +1,4 @@
+import src
 import pandas as pd
 import yaml
 import boto3
@@ -6,8 +7,9 @@ from datetime import datetime
 from io import StringIO, BytesIO
 import logging
 import numpy as np
+
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +18,7 @@ def fetch_data():
     Fetch data from S3 (production) or use local simulation (development)
     Data engineering team uploads monthly data to S3
     """
-    with open("params.yaml") as f:
+    with open("config/params.yaml") as f:
         config = yaml.safe_load(f)
 
     logger.info("Starting data fetch process...")

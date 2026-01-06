@@ -22,18 +22,26 @@ A complete, production-grade MLOps pipeline for predicting customer churn. This 
 
 
 
-#### 📁 Project Structure
+## 📁 Project Structure
 
 ```text
-mlops-telecom-churn/
+MLOPS/
 ├── src/
+│   ├── __init__.py        # Package initialization & logging configuration
 │   ├── fetch_data.py      # Fetches data from S3 with local fallback
 │   ├── preprocess.py      # Data cleaning and feature engineering
 │   ├── train.py           # Model training and MLflow logging
 │   └── predict.py         # Batch prediction, drift analysis, metrics export
+├── config/
+│   ├── params.yaml        # All configuration parameters
+│   └── prometheus.yml     # Monitoring configurations
 ├── data/
 │   ├── raw/               # Raw data (DVC-tracked)
 │   └── processed/         # Cleaned features
+├── models/                # Saved model artifacts
+├── notebooks/             # EDA and prototyping
+├── tests/                 # Unit and integration tests
+├── logs/                  # Application and pipeline logs
 ├── predictions/
 │   ├── data/              # Daily prediction outputs
 │   └── reports/           # Evidently.ai drift reports
@@ -41,9 +49,10 @@ mlops-telecom-churn/
 │   ├── dashboards/
 │   └── provisioning/      # Automated Grafana configuration and dashboard json
 ├── mlruns/                # MLflow experiment tracking
+├── mlflow.db              # MLflow backend database
 ├── docker-compose.monitoring.yml  # Monitoring stack
 ├── dvc.yaml               # Data versioning pipeline
-├── params.yaml            # All configuration parameters
+├── pyproject.toml         # Dependency management (uv)
 └── .github/workflows/     # CI/CD pipelines
     ├── retrain.yml        # Monthly model retraining
     └── predict.yml        # Daily prediction & monitoring

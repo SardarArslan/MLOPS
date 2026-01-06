@@ -1,9 +1,9 @@
 name: Churn Model Monthly Retraining
 
 on:
-  schedule:
-    # Run at 02:00 UTC on the 1st day of every month
-    - cron: '0 2 1 * *'
+#  schedule:
+#    # Run at 02:00 UTC on the 1st day of every month
+#    - cron: '0 2 1 * *'
   workflow_dispatch:  # Manual trigger option
 
 jobs:
@@ -19,10 +19,10 @@ jobs:
           # Important: Fetch DVC-tracked files
           lfs: true
 
-      - name: Install uv and Python 3.12
+      - name: Install uv and Python 3.11.7
         uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11.7"
           enable-cache: true
 
       - name: Install Python dependencies

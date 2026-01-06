@@ -1,0 +1,19 @@
+base:
+  project: telecom-churn
+  random_state: 42
+
+data:
+  raw_csv: data/raw/churn.csv
+  test_size: 0.2
+  # S3 Configuration (optional - for production)
+  s3_source_bucket: null  # Set in GitHub Secrets for production
+  s3_source_key: "raw/churn_data.csv"  # Where data engineering uploads data
+  s3_dvc_remote: "s3://your-dvc-bucket"  # DVC remote storage
+
+train:
+  n_estimators: 250
+  max_depth: 25
+  class_weight: "balanced"
+
+model_selection:
+  threshold: 0.3

@@ -1,11 +1,13 @@
+import src
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import yaml
 import os
-
+import logging
+logger = logging.getLogger(__name__)
 
 def preprocess():
-    with open("params.yaml") as f:
+    with open("config/params.yaml") as f:
         config = yaml.safe_load(f)
 
     df = pd.read_csv(config['data']['raw_csv'])
@@ -29,7 +31,7 @@ def preprocess():
     # Save processed data
     os.makedirs("data/processed", exist_ok=True)
     df.to_csv("data/processed/churn_cleaned.csv", index=False)
-    print("Preprocessing complete!")
+    logger.info("Preprocessing complete!")
 
 
 if __name__ == "__main__":

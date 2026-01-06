@@ -1,3 +1,4 @@
+import src
 import pandas as pd
 import numpy as np
 import yaml
@@ -7,6 +8,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import recall_score, precision_score, f1_score
 import os
+import logging
+
+
+logger = logging.getLogger(__name__)
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 local_mlruns_path = os.path.join(project_root, "mlruns")
 mlflow_uri = os.getenv("MLFLOW_TRACKING_URI")
@@ -21,7 +26,7 @@ else:
 
 def train():
     # Load parameters
-    with open("params.yaml") as f:
+    with open("config/params.yaml") as f:
         config = yaml.safe_load(f)
 
     # Load preprocessed data
@@ -66,8 +71,7 @@ def train():
         # Log the model
         mlflow.sklearn.log_model(rf, "model", registered_model_name="ChurnPredictor")
 
-        print(f"Training Complete. Recall: {metrics['recall']:.2f}, Precision: {metrics['precision']:.2f}")
-
+        logger.info(f"Training Complete. Recall: {metrics['recall']:.2f}, Precision: {metrics['precision']:.2f}")
 
 if __name__ == "__main__":
     train()

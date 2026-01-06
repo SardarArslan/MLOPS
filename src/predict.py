@@ -1,3 +1,4 @@
+import src
 import pandas as pd
 import mlflow
 import yaml
@@ -14,14 +15,9 @@ import boto3
 from io import StringIO
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+
 load_dotenv()
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +31,7 @@ def run_prediction(date=None):
     logger.info(f"🚀 Starting prediction pipeline for {date}")
 
     # Load configuration
-    with open("params.yaml") as f:
+    with open("config/params.yaml") as f:
         config = yaml.safe_load(f)
 
     threshold = config['model_selection'].get('threshold', 0.5)
